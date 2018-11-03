@@ -2,20 +2,31 @@
   "name": "smb-enumerate-shares",
   "version": "0.2.0",
   "description": "SMB share enumeration for Node",
+  "author": "Joris Diesvelt <jorisdiesvelt@gmail.com>",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [
     "SMB",
     "SMB2",
     "CIFS",
     "Samba",
     "network",
-    "shares"
+    "shares",
+    "drive",
+    "storage",
+    "file-sharing"
   ],
-  "author": "Joris Diesvelt",
+  "homepage": "https://github.com/SylverFox/smb-enumerate-shares#readme",
+  "bugs": {
+    "url": "https://github.com/SylverFox/smb-enumerate-shares/issues"
+  },
   "license": "ISC",
+  "files": [
+    "index.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SylverFox/smb-enumerate-shares.git"
+  },
   "dependencies": {
     "ntlm": "^0.1.3"
   }
