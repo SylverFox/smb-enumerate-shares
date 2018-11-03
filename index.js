@@ -69,12 +69,10 @@ module.exports = async function(options) {
 	if(!host) {
 		throw new Error('No host provided')
 	}
-
 	let responsePromise, result, data, shares
 	let messageid = 0, rpcMessageid = 0, sessionid = '0', treeid = 0, fileid = 0
 	
 	const request = message => {
-		//console.log('request', messageid, message.toString('hex'))
 		const promise = new Promise((resolve, reject) => responsePromise = {resolve, reject})
 		socket.write(message)
 		messageid++
@@ -87,7 +85,7 @@ module.exports = async function(options) {
 			if(COMMON_ERRORS[status]) {
 				throw new Error(COMMON_ERRORS[status])
 			} else {
-				throw new Error('Response status 0x'+status.toString(16)+' !== 0x'+expected.toString(16))
+				throw new Error(`NTSTATUS 0x${status.toString(16)}. Expected: 0x${expected.toString(16)}`)
 			}
 		}
 	}
@@ -131,10 +129,8 @@ module.exports = async function(options) {
 
 	const socket = new net.Socket({allowHalfOpen: true})
 		.on('data', data => {
-			//console.log('response', messageid-1, data.toString('hex'))
-			if(data.readUInt32LE(12) === 0x103) {// STATUS_PENDING
-				//console.log('waiting for next packet')
-			} else {
+			// ignore packet when STATUS_PENDING
+			if(data.readUInt32LE(12) !== 0x103) { 
 				responsePromise.resolve(data)
 			}
 		})
@@ -187,11 +183,11 @@ module.exports = async function(options) {
 	
 	// send NetShareEnumAll request
 	let remote_name = '\\\\'+host+'\0'
-	let server_len = remote_name.length //17
-	let server_bytes_len = server_len * 2 //34
+	let server_len = remote_name.length
+	let server_bytes_len = server_len * 2
 	if(server_len % 2 !== 0) {
-		remote_name += '\0' // padding
-		server_bytes_len += 2 // 36
+		remote_name += '\0'
+		server_bytes_len += 2
 	}
 	const base = Buffer.from(
 		'050000031000000000000000000000004c00000000000f0000000200000000000000000000000000', 'hex'
@@ -238,5 +234,3 @@ module.exports = async function(options) {
 	
 	return shares
 }
-
-
