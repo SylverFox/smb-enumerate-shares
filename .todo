@@ -1,0 +1,5 @@
+☐ implement some error messages @started(18-11-03 19:31)
+☐ write README
+✔ write PACKAGE.json @done(18-11-03 20:02)
+✔ change options to Object or String with smb:// string @done(18-11-03 19:31)
+☐ cleanup code
