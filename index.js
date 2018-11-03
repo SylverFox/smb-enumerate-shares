@@ -66,6 +66,8 @@ module.exports = async function(options) {
 	const username = options.username || 'guest'
 	const password = options.password || ''
 	const domain = options.domain || 'WORKGROUP'
+	const timeout = options.timeout || 5000
+
 	if(!host) {
 		throw new Error('No host provided')
 	}
@@ -134,8 +136,14 @@ module.exports = async function(options) {
 				responsePromise.resolve(data)
 			}
 		})
+		.on('timeout', () => {
+			socket.destroy()
+			responsePromise.reject(new Error('Connection timeout'))
+		})
 		.on('error', err => responsePromise.reject(err))
 		.connect(port, host)
+	
+	socket.setTimeout(timeout)
 	
 	/* MESSAGE PIPELINE */
 

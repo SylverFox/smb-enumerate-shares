@@ -17,12 +17,13 @@ Retrieves the shares available on the host given in the options. The `options` p
 - `username` (optional) - The username of an account on the server. Defaults to *guest*
 - `password` (optional) - The password of the account. Defaults to *empty*
 - `domain` (optional) - The SMB NT domain. Defaults to *WORKGROUP*
+- `timeout` (optional) - The length of time in milliseconds the connection will wait for a response from the server. Defaults to *5000*
 
 Options may also be an SMB connection url string of the following format:
 
 `smb://[[<domain>;]<username>[:<password>]@]<host>[:port][/path]`
 
-This returns a **promise** resulting in an **array** of share objects. Each object has the following properties:
+This returns a **promise** resolving in an **array** of share objects. Each object has the following properties:
 
 - `name` - The name of the share
 - `hidden` - Whether this share is tagged as hidden. These shares normally end in a dollar sign
