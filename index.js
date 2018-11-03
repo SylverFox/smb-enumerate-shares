@@ -1,6 +1,7 @@
-const url = require('url')
 const net = require('net')
 const ntlm = require('ntlm')
+
+const smbUrlRegex = /smb:\/\/(?:(?:(.*);)?(\w+)(?::(\w+))?@)?([\w.]+)(?::(\d+))?[\w/]*$/
 
 // SMB message command opcodes
 const NEGOTIATE = 0x00
@@ -22,6 +23,13 @@ const SHARETYPES = {
 	[0x03]: 'IPC'
 }
 
+// common error codes
+const COMMON_ERRORS = {
+	0xc000006d: 'STATUS_LOGON_FAILURE',
+	0xc000000d: 'STATUS_INVALID_PARAMETER',
+	0xc0000072: 'STATUS_ACCOUNT_DISABLED'
+}
+
 const NETBIOS_HEADER = '00000000'
 
 const SMB_HEADER = 'fe534d4240' + '0'.repeat(118)
@@ -39,21 +47,49 @@ const requestStructures = {
 	[CLOSE]: '180000000000000000000000000000000000000000000000'
 }
 
-module.exports = async function(host, username = 'guest', password = '', domain = 'WORKGROUP') {
+module.exports = async function(options) {
+	if(typeof options === 'string') {
+		const matches = options.match(smbUrlRegex)
+		if(!matches) {
+			throw new Error('Invalid smb url')
+		}
+		options = {
+			domain: matches[1],
+			username: matches[2],
+			password: matches[3],
+			host: matches[4],
+			port: matches[5]
+		}
+	}
+	const host = options.host
+	const port = options.port || 445
+	const username = options.username || 'guest'
+	const password = options.password || ''
+	const domain = options.domain || 'WORKGROUP'
+	if(!host) {
+		throw new Error('No host provided')
+	}
+
 	let responsePromise, result, data, shares
 	let messageid = 0, rpcMessageid = 0, sessionid = '0', treeid = 0, fileid = 0
 	
 	const request = message => {
 		//console.log('request', messageid, message.toString('hex'))
-		const promise = new Promise(resolve => responsePromise = resolve)
+		const promise = new Promise((resolve, reject) => responsePromise = {resolve, reject})
 		socket.write(message)
 		messageid++
 		return promise
 	}
 	
 	const confirmStatus = (status, expected) =>  {
-		if(status !== expected)
-			throw new Error('Response status 0x'+status.toString(16)+' !== 0x'+expected.toString(16))
+		if(status !== expected) {
+			socket.destroy()
+			if(COMMON_ERRORS[status]) {
+				throw new Error(COMMON_ERRORS[status])
+			} else {
+				throw new Error('Response status 0x'+status.toString(16)+' !== 0x'+expected.toString(16))
+			}
+		}
 	}
 	
 	const createRequest = (command, params) => {
@@ -99,11 +135,11 @@ module.exports = async function(host, username = 'guest', password = '', domain 
 			if(data.readUInt32LE(12) === 0x103) {// STATUS_PENDING
 				//console.log('waiting for next packet')
 			} else {
-				responsePromise(data)
+				responsePromise.resolve(data)
 			}
 		})
-		.on('error', err => {throw err})
-		.connect(445, host)
+		.on('error', err => responsePromise.reject(err))
+		.connect(port, host)
 	
 	/* MESSAGE PIPELINE */
 
