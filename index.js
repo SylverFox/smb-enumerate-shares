@@ -134,10 +134,12 @@ module.exports = async function(options) {
 
 	const socket = new net.Socket()
 		.on('data', data => {
-			// ignore packet when STATUS_PENDING
-			if(data.readUInt32LE(12) !== 0x103) { 
-				responsePromise.resolve(data)
+			const packetLength = data.readUInt32BE(0)
+			if(data.length > packetLength + 4) {
+				// double packet received, ignore first one (most likely STATUS_PENDING)
+				data = data.slice(packetLength + 4, data.length)
 			}
+			responsePromise.resolve(data)
 		}).on('timeout', () => {
 			socket.destroy()
 			responsePromise.reject(new Error('Connection timeout'))
