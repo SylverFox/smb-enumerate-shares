@@ -25,9 +25,12 @@ const SHARETYPES = {
 
 // common error codes
 const COMMON_ERRORS = {
-	0xc000006d: 'STATUS_LOGON_FAILURE',
 	0xc000000d: 'STATUS_INVALID_PARAMETER',
-	0xc0000072: 'STATUS_ACCOUNT_DISABLED'
+	0xc0000022: 'STATUS_ACCESS_DENIED',
+	0xc000005e: 'STATUS_NO_LOGON_SERVERS',
+	0xc000006d: 'STATUS_LOGON_FAILURE',
+	0xc0000072: 'STATUS_ACCOUNT_DISABLED',
+	0xc00000bb: 'STATUS_NOT_SUPPORTED',
 }
 
 const NETBIOS_HEADER = '00000000'
@@ -129,7 +132,7 @@ module.exports = async function(options) {
 		return buffer
 	}
 
-	const socket = new net.Socket({allowHalfOpen: true})
+	const socket = new net.Socket()
 		.on('data', data => {
 			// ignore packet when STATUS_PENDING
 			if(data.readUInt32LE(12) !== 0x103) { 
@@ -140,7 +143,10 @@ module.exports = async function(options) {
 			socket.destroy()
 			responsePromise.reject(new Error('Connection timeout'))
 		})
-		.on('error', err => responsePromise.reject(err))
+		.on('error', err => {
+			socket.destroy()
+			responsePromise.reject(err)
+		})
 		.connect(port, host)
 	
 	socket.setTimeout(timeout)
