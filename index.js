@@ -74,7 +74,7 @@ module.exports = async function(options) {
 	if(!host) {
 		throw new Error('No host provided')
 	}
-	let responsePromise, result, data, shares
+	let responsePromise, result, data, shares, done = false
 	let messageid = 0, rpcMessageid = 0, sessionid = '0', treeid = 0, fileid = 0
 	
 	const request = message => {
@@ -138,14 +138,15 @@ module.exports = async function(options) {
 			if(data.readUInt32LE(12) !== 0x103) { 
 				responsePromise.resolve(data)
 			}
-		})
-		.on('timeout', () => {
+		}).on('timeout', () => {
 			socket.destroy()
 			responsePromise.reject(new Error('Connection timeout'))
-		})
-		.on('error', err => {
+		}).on('error', err => {
 			socket.destroy()
 			responsePromise.reject(err)
+		}).on('end', () => {
+			if(!done)
+				responsePromise.reject(new Error('Connection unexpected ended'))
 		})
 		.connect(port, host)
 	
@@ -244,6 +245,7 @@ module.exports = async function(options) {
 	}
 
 	// close connection
+	done = true
 	request(createRequest(CLOSE)).then(() => socket.destroy())
 	
 	return shares
