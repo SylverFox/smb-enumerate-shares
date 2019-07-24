@@ -140,7 +140,11 @@ module.exports = async function(options) {
 				// double packet received, ignore first one (most likely STATUS_PENDING)
 				data = data.slice(packetLength + 4, data.length)
 			}
-			responsePromise.resolve(data)
+			const status = data.readUInt32LE(12)
+			if(status !== STATUS_PENDING) {
+				// only resolve when the packet we're interested in is received
+				responsePromise.resolve(data)
+			}
 		}).on('timeout', () => {
 			socket.destroy()
 			responsePromise.reject(new Error('Connection timeout'))
