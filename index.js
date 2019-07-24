@@ -1,7 +1,7 @@
 const net = require('net')
 const ntlm = require('ntlm')
 
-const smbUrlRegex = /smb:\/\/(?:(?:(.*);)?(\w+)(?::(\w+))?@)?([\w.]+)(?::(\d+))?[\w/]*$/
+const STATUS_PENDING = 0x103
 
 // SMB message command opcodes
 const NEGOTIATE = 0x00
@@ -52,6 +52,7 @@ const requestStructures = {
 
 module.exports = async function(options) {
 	if(typeof options === 'string') {
+		const smbUrlRegex = /^smb:\/\/(?:(?:(.*?);)?(.*?)(?::(.*?))?@)?([^:/]+)(?::(\d+))?/
 		const matches = options.match(smbUrlRegex)
 		if(!matches) {
 			throw new Error('Invalid smb url')
@@ -248,7 +249,7 @@ module.exports = async function(options) {
 
 	// close connection
 	done = true
-	request(createRequest(CLOSE)).then(() => socket.destroy())
+	await request(createRequest(CLOSE)).then(() => socket.destroy())
 	
 	return shares
 }

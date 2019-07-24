@@ -21,7 +21,7 @@ Retrieves the shares available on the host given in the options. The `options` p
 
 Options may also be an SMB connection url string of the following format:
 
-`smb://[[<domain>;]<username>[:<password>]@]<host>[:port][/path]`
+`smb://[[<domain>;]<username>[:<password>]@]<host>[:<port>][/<path>]`
 
 This returns a **promise** resolving in an **array** of share objects. Each object has the following properties:
 
