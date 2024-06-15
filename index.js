@@ -120,7 +120,7 @@ module.exports = async function(options) {
 			structure.write(fileid, 8, fileid.length, 'hex')
 			structure = Buffer.concat([structure, params])
 		} else if(command === CLOSE) {
-			structure.write(fileid, 8, fileid.length, 'hex')
+			structure.write(fileid, 8, structure.length - 8, 'hex')
 		}
 		
 		const buffer = Buffer.concat([header, structure])
